@@ -71,8 +71,111 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 ```
+## Docker Networking & Volumes
 
-## 2. Multi-Stage Dockerfiles
+### Docker Networking Types
+
+#### Bridge Networks (Default)
+
+- Create isolated networks between containers
+- Containers get unique IP addresses
+- Enable communication between containers on same host
+
+```bash
+docker network create my-bridge
+docker run --network my-bridge --name app1 nginx
+docker run --network my-bridge --name app2 alpine ping app1
+```
+
+#### Host Networks
+
+- Remove network isolation
+- Share host's network stack
+- Better performance but reduced security
+
+```bash
+docker run --network host nginx
+```
+
+#### Overlay Networks
+
+- Enable communication across multiple Docker hosts
+- Used in Docker Swarm and Kubernetes
+- Secure encrypted communication
+
+```bash
+docker network create -d overlay my-overlay
+```
+
+#### None Networks
+
+- Disable all networking
+- Complete network isolation
+- Used for security-sensitive applications
+
+```bash
+docker run --network none alpine
+```
+
+### Docker Volumes for Persistent Storage
+
+#### Volume Types
+
+**Named Volumes (Recommended):**
+
+```bash
+docker volume create mydata
+docker run -v mydata:/data nginx
+```
+
+**Bind Mounts:**
+
+```bash
+docker run -v /host/path:/container/path nginx
+```
+
+**tmpfs Mounts (Linux only):**
+
+```bash
+docker run --tmpfs /tmp nginx
+```
+
+#### Volume Management
+
+```bash
+# Create volume
+docker volume create postgres_data
+
+# List volumes
+docker volume ls
+
+# Inspect volume
+docker volume inspect postgres_data
+
+# Remove unused volumes
+docker volume prune
+
+# Remove specific volume
+docker volume rm postgres_data
+```
+
+#### Volume Usage in Docker Compose
+
+```yaml
+services:
+  db:
+    image: postgres:14
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - /host/logs:/var/log/postgresql
+
+volumes:
+  postgres_data:
+    driver: local
+```
+
+## Multi-Stage Dockerfiles
 
 Multi-stage builds optimize image sizes by separating build and runtime environments, eliminating unnecessary build tools from final images.
 
@@ -135,68 +238,7 @@ CMD ["node", "dist/index.js"]
 - Copy only necessary artifacts between stages
 - Choose appropriate base images for each stage
 
-## 3. Docker Errors & Troubleshooting
-
-### Common Docker Errors and Solutions
-
-#### Container Lifecycle Issues
-
-**Problem**: Container fails to start
-**Solutions:**
-
-- Check logs: `docker logs [container_id]`
-- Inspect configuration: `docker inspect [container_id]`
-- Verify Dockerfile syntax and dependencies
-- Check port conflicts
-
-#### Application Errors
-
-**Problem**: Application crashes inside container
-**Debugging Steps:**
-
-1. Access container shell: `docker exec -it [container] /bin/bash`
-2. Check application logs within container
-3. Verify environment variables
-4. Test connectivity to external services
-
-#### Networking Issues
-
-**Problem**: Containers cannot communicate
-**Solutions:**
-
-- Inspect networks: `docker network inspect [network]`
-- Test connectivity: `docker exec -it [container] ping [target]`
-- Check port mappings and firewall settings
-- Verify DNS resolution
-
-#### Build Issues
-
-**Problem**: Docker build fails
-**Troubleshooting:**
-
-- Review build output for error messages
-- Disable BuildKit temporarily: `DOCKER_BUILDKIT=0 docker build`
-- Run intermediate layers: `docker run -it [layer_id] sh`
-- Check .dockerignore file
-
-### Performance Debugging
-
-**Monitor Resource Usage:**
-
-```bash
-docker stats
-docker system df
-docker system prune
-```
-
-**Debug Network Connectivity:**
-
-```bash
-docker exec -it container_name ping target_host
-docker exec -it container_name nc -zv target_ip port
-```
-
-## 4. Docker Compose with Projects
+## Docker Compose 
 
 Docker Compose simplifies multi-container application deployment by defining services, networks, and volumes in a single YAML file.
 
@@ -301,110 +343,69 @@ docker-compose up -d --scale web=3
 docker-compose exec web python manage.py migrate
 ```
 
-## 5. Docker Networking & Volumes
 
-### Docker Networking Types
+## Docker Errors & Troubleshooting
 
-#### Bridge Networks (Default)
+### Common Docker Errors and Solutions
 
-- Create isolated networks between containers
-- Containers get unique IP addresses
-- Enable communication between containers on same host
+#### Container Lifecycle Issues
 
-```bash
-docker network create my-bridge
-docker run --network my-bridge --name app1 nginx
-docker run --network my-bridge --name app2 alpine ping app1
-```
+**Problem**: Container fails to start
+**Solutions:**
 
-#### Host Networks
+- Check logs: `docker logs [container_id]`
+- Inspect configuration: `docker inspect [container_id]`
+- Verify Dockerfile syntax and dependencies
+- Check port conflicts
 
-- Remove network isolation
-- Share host's network stack
-- Better performance but reduced security
+#### Application Errors
 
-```bash
-docker run --network host nginx
-```
+**Problem**: Application crashes inside container
+**Debugging Steps:**
 
-#### Overlay Networks
+1. Access container shell: `docker exec -it [container] /bin/bash`
+2. Check application logs within container
+3. Verify environment variables
+4. Test connectivity to external services
 
-- Enable communication across multiple Docker hosts
-- Used in Docker Swarm and Kubernetes
-- Secure encrypted communication
+#### Networking Issues
 
-```bash
-docker network create -d overlay my-overlay
-```
+**Problem**: Containers cannot communicate
+**Solutions:**
 
-#### None Networks
+- Inspect networks: `docker network inspect [network]`
+- Test connectivity: `docker exec -it [container] ping [target]`
+- Check port mappings and firewall settings
+- Verify DNS resolution
 
-- Disable all networking
-- Complete network isolation
-- Used for security-sensitive applications
+#### Build Issues
 
-```bash
-docker run --network none alpine
-```
+**Problem**: Docker build fails
+**Troubleshooting:**
 
-### Docker Volumes for Persistent Storage
+- Review build output for error messages
+- Disable BuildKit temporarily: `DOCKER_BUILDKIT=0 docker build`
+- Run intermediate layers: `docker run -it [layer_id] sh`
+- Check .dockerignore file
 
-#### Volume Types
+### Performance Debugging
 
-**Named Volumes (Recommended):**
+**Monitor Resource Usage:**
 
 ```bash
-docker volume create mydata
-docker run -v mydata:/data nginx
+docker stats
+docker system df
+docker system prune
 ```
 
-**Bind Mounts:**
+**Debug Network Connectivity:**
 
 ```bash
-docker run -v /host/path:/container/path nginx
+docker exec -it container_name ping target_host
+docker exec -it container_name nc -zv target_ip port
 ```
 
-**tmpfs Mounts (Linux only):**
-
-```bash
-docker run --tmpfs /tmp nginx
-```
-
-#### Volume Management
-
-```bash
-# Create volume
-docker volume create postgres_data
-
-# List volumes
-docker volume ls
-
-# Inspect volume
-docker volume inspect postgres_data
-
-# Remove unused volumes
-docker volume prune
-
-# Remove specific volume
-docker volume rm postgres_data
-```
-
-#### Volume Usage in Docker Compose
-
-```yaml
-services:
-  db:
-    image: postgres:14
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
-      - /host/logs:/var/log/postgresql
-
-volumes:
-  postgres_data:
-    driver: local
-```
-## 1. Private Docker Registry
+## Private Docker Registry
 
 ### Setting up a Private Docker Registry with Nexus
 
@@ -481,7 +482,7 @@ docker pull localhost:19001/myapp:latest
 ```
 
 
-## 8. Docker Project: Multi-Tier Node.js + MySQL
+## Docker Project: Multi-Tier Node.js + MySQL
 
 ### Node.js Application with MySQL Database
 
