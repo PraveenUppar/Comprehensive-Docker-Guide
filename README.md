@@ -1,4 +1,35 @@
-# Comprehensive Docker Guide: From Private Registries to Multi-Tier Applications
+# Comprehensive Docker Guide:
+Virtualization and containerization are both technologies that enable resource sharing and application isolation, but they operate at different levels and offer distinct advantages.
+
+## Docker Architecture
+Docker Daemon (dockerd): The core engine that runs as a background process on the host system. It manages the lifecycle of Docker containers, builds images, and handles API requests from clients. The daemon exposes a REST API for communication and can interact with other daemons in distributed environments.
+
+Docker Client: The primary interface for user interaction, typically through a command-line interface (CLI). It translates user commands like docker run and docker build into REST API requests sent to the Docker daemon. The client can communicate with multiple daemons and doesn't need to run on the same host as the daemon.
+
+Docker Registry: A stateless, scalable storage system for Docker images. The most common public registry is Docker Hub, but organizations often use private registries for proprietary images. Registries enable image sharing, distribution, and version control.
+
+## Understanding Docker
+
+Docker Images
+A Docker image is an immutable, read-only template that contains all the instructions and files needed to create a container. Images are composed of multiple layers, where each layer represents a change or instruction from the Dockerfile. These layers are cached and can be shared among multiple containers, optimizing storage efficiency.
+
+Dockerfile
+A Dockerfile is a text-based configuration file containing a series of instructions that Docker uses to build an image automatically. It defines the base image, application dependencies, environment configuration, and runtime commands.
+```text
+FROM: Specifies the base image
+
+WORKDIR: Sets the working directory
+
+COPY/ADD: Copies files from host to image
+
+RUN: Executes commands during build
+
+EXPOSE: Documents port usage
+
+CMD/ENTRYPOINT: Defines container startup behavior
+```
+Docker Containers
+A Docker container is a lightweight, runnable instance of a Docker image. Containers include all necessary components to run an application: code, runtime, system tools, libraries, and settings. Unlike images, containers are mutable and include an additional writable layer on top of the image layers.
 
 ## Install & Setup Docker With Proper Permissions
 
@@ -15,7 +46,31 @@ newgrp docker
 # Verify permissions
 docker run hello-world
 ```
+## Writing Optimized Dockerfiles
+Separate build and runtime environments to exclude unnecessary build tools and dependencies from the final image
+```text
+# Build stage
+FROM golang:1.19 AS builder
+WORKDIR /app
+COPY . .
+RUN go build -o myapp
 
+# Runtime stage  
+FROM alpine:latest
+WORKDIR /root/
+COPY --from=builder /app/myapp .
+CMD ["./myapp"]
+
+```
+## Minimizing Image Size and Build Times
+Dependency Management: Use package managers efficiently and clean up unnecessary files
+```text
+RUN apt-get update && apt-get install -y \
+    package1 \
+    package2 \
+    && rm -rf /var/lib/apt/lists/*
+
+```
 ## 1. Private Docker Registry
 
 ### Setting up a Private Docker Registry with Nexus
