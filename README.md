@@ -1,5 +1,21 @@
 # Comprehensive Docker Guide: From Private Registries to Multi-Tier Applications
 
+## Install & Setup Docker With Proper Permissions
+
+```bash
+# Create docker group
+sudo groupadd docker
+
+# Add user to docker group
+sudo usermod -aG docker $USER
+
+# Apply group changes
+newgrp docker
+
+# Verify permissions
+docker run hello-world
+```
+
 ## 1. Private Docker Registry
 
 ### Setting up a Private Docker Registry with Nexus
@@ -7,6 +23,7 @@
 Private Docker registries provide secure, controlled environments for storing and managing container images, especially critical for commercial applications.
 
 #### Benefits of Private Registries
+
 - **Faster Build Times**: Caching features reduce download times for frequently used images
 - **Security**: Keep proprietary applications and sensitive data within your organization
 - **Cost Control**: Avoid Docker Hub rate limits and subscription costs
@@ -15,12 +32,14 @@ Private Docker registries provide secure, controlled environments for storing an
 #### Nexus Repository Setup
 
 **Prerequisites:**
+
 - Docker and Docker Compose installed
 - Ports 8084 (management) and 19001 (Docker registry) available
 
 **Docker Compose Configuration:**
+
 ```yaml
-version: '3'
+version: "3"
 services:
   nexus_oss:
     image: sonatype/nexus3:3.45.0
@@ -36,6 +55,7 @@ volumes:
 ```
 
 **Setup Steps:**
+
 1. Start Nexus: `docker-compose up -d`
 2. Access web interface at `http://localhost:8084`
 3. Retrieve initial admin password from `/nexus-data/admin.password`
@@ -45,6 +65,7 @@ volumes:
 #### Using Docker Hub as Proxy
 
 Configure Nexus as a Docker Hub proxy to cache images locally:
+
 - Repository type: Docker Proxy
 - Remote URL: `https://registry-1.docker.io`
 - Port: 8082
@@ -53,17 +74,20 @@ Configure Nexus as a Docker Hub proxy to cache images locally:
 ### Pushing and Pulling Images
 
 **Login to Registry:**
+
 ```bash
 docker login localhost:19001
 ```
 
 **Tag and Push Images:**
+
 ```bash
 docker tag myapp:latest localhost:19001/myapp:latest
 docker push localhost:19001/myapp:latest
 ```
 
 **Pull from Registry:**
+
 ```bash
 docker pull localhost:19001/myapp:latest
 ```
@@ -73,6 +97,7 @@ docker pull localhost:19001/myapp:latest
 Multi-stage builds optimize image sizes by separating build and runtime environments, eliminating unnecessary build tools from final images.
 
 ### Benefits
+
 - **Smaller Images**: Remove build dependencies from production images
 - **Single Dockerfile**: Consolidate complex build processes
 - **Better Security**: Fewer components mean reduced attack surface
@@ -123,6 +148,7 @@ CMD ["node", "dist/index.js"]
 ```
 
 ### Best Practices for Multi-Stage Builds
+
 - Place frequently changing stages last
 - Use specific image tags for build stages
 - Leverage build cache effectively
@@ -134,32 +160,40 @@ CMD ["node", "dist/index.js"]
 ### Common Docker Errors and Solutions
 
 #### Container Lifecycle Issues
+
 **Problem**: Container fails to start
 **Solutions:**
+
 - Check logs: `docker logs [container_id]`
 - Inspect configuration: `docker inspect [container_id]`
 - Verify Dockerfile syntax and dependencies
 - Check port conflicts
 
 #### Application Errors
+
 **Problem**: Application crashes inside container
 **Debugging Steps:**
+
 1. Access container shell: `docker exec -it [container] /bin/bash`
 2. Check application logs within container
 3. Verify environment variables
 4. Test connectivity to external services
 
 #### Networking Issues
+
 **Problem**: Containers cannot communicate
 **Solutions:**
+
 - Inspect networks: `docker network inspect [network]`
 - Test connectivity: `docker exec -it [container] ping [target]`
 - Check port mappings and firewall settings
 - Verify DNS resolution
 
 #### Build Issues
+
 **Problem**: Docker build fails
 **Troubleshooting:**
+
 - Review build output for error messages
 - Disable BuildKit temporarily: `DOCKER_BUILDKIT=0 docker build`
 - Run intermediate layers: `docker run -it [layer_id] sh`
@@ -168,6 +202,7 @@ CMD ["node", "dist/index.js"]
 ### Performance Debugging
 
 **Monitor Resource Usage:**
+
 ```bash
 docker stats
 docker system df
@@ -175,6 +210,7 @@ docker system prune
 ```
 
 **Debug Network Connectivity:**
+
 ```bash
 docker exec -it container_name ping target_host
 docker exec -it container_name nc -zv target_ip port
@@ -187,7 +223,7 @@ Docker Compose simplifies multi-container application deployment by defining ser
 ### Basic Docker Compose Structure
 
 ```yaml
-version: '3.8'
+version: "3.8"
 services:
   web:
     build: .
@@ -197,7 +233,7 @@ services:
       - NODE_ENV=production
     depends_on:
       - db
-  
+
   db:
     image: postgres:14
     environment:
@@ -214,7 +250,7 @@ volumes:
 ### Multi-Container Application Example
 
 ```yaml
-version: '3.8'
+version: "3.8"
 services:
   nginx:
     image: nginx:alpine
@@ -290,6 +326,7 @@ docker-compose exec web python manage.py migrate
 ### Docker Networking Types
 
 #### Bridge Networks (Default)
+
 - Create isolated networks between containers
 - Containers get unique IP addresses
 - Enable communication between containers on same host
@@ -301,6 +338,7 @@ docker run --network my-bridge --name app2 alpine ping app1
 ```
 
 #### Host Networks
+
 - Remove network isolation
 - Share host's network stack
 - Better performance but reduced security
@@ -310,6 +348,7 @@ docker run --network host nginx
 ```
 
 #### Overlay Networks
+
 - Enable communication across multiple Docker hosts
 - Used in Docker Swarm and Kubernetes
 - Secure encrypted communication
@@ -319,6 +358,7 @@ docker network create -d overlay my-overlay
 ```
 
 #### None Networks
+
 - Disable all networking
 - Complete network isolation
 - Used for security-sensitive applications
@@ -332,17 +372,20 @@ docker run --network none alpine
 #### Volume Types
 
 **Named Volumes (Recommended):**
+
 ```bash
 docker volume create mydata
 docker run -v mydata:/data nginx
 ```
 
 **Bind Mounts:**
+
 ```bash
 docker run -v /host/path:/container/path nginx
 ```
 
 **tmpfs Mounts (Linux only):**
+
 ```bash
 docker run --tmpfs /tmp nginx
 ```
@@ -387,6 +430,7 @@ volumes:
 ### Spring Boot Application Containerization
 
 #### Traditional Approach
+
 ```dockerfile
 FROM eclipse-temurin:17-jdk
 ARG JAR_FILE=target/*.jar
@@ -396,6 +440,7 @@ ENTRYPOINT ["java", "-jar", "/app.jar"]
 ```
 
 #### Multi-Stage Build for Java
+
 ```dockerfile
 # Build Stage
 FROM maven:3.8-openjdk-17 AS builder
@@ -416,6 +461,7 @@ ENTRYPOINT ["java", "-jar", "app.jar"]
 ```
 
 #### Gradle Alternative
+
 ```dockerfile
 # Build Stage
 FROM gradle:7.6-jdk17 AS builder
@@ -439,6 +485,7 @@ ENTRYPOINT ["java", "-jar", "app.jar"]
 ### .NET Core Application with MongoDB
 
 #### Application Structure
+
 ```
 dotnet-mongodb-app/
 ├── docker-compose.yml
@@ -452,6 +499,7 @@ dotnet-mongodb-app/
 ```
 
 #### Dockerfile for .NET Application
+
 ```dockerfile
 # Build Stage
 FROM mcr.microsoft.com/dotnet/sdk:7.0 AS builder
@@ -470,8 +518,9 @@ ENTRYPOINT ["dotnet", "MyApp.dll"]
 ```
 
 #### Docker Compose Configuration
+
 ```yaml
-version: '3.8'
+version: "3.8"
 services:
   web:
     build: .
@@ -509,18 +558,19 @@ networks:
 ```
 
 #### MongoDB Initialization Script
+
 ```javascript
 // init-mongo.js
-db = db.getSiblingDB('myapp');
+db = db.getSiblingDB("myapp");
 db.createUser({
-  user: 'appuser',
-  pwd: 'apppassword',
-  roles: [{ role: 'readWrite', db: 'myapp' }]
+  user: "appuser",
+  pwd: "apppassword",
+  roles: [{ role: "readWrite", db: "myapp" }],
 });
 
 db.products.insertMany([
-  { name: 'Product 1', price: 29.99 },
-  { name: 'Product 2', price: 39.99 }
+  { name: "Product 1", price: 29.99 },
+  { name: "Product 2", price: 39.99 },
 ]);
 ```
 
@@ -529,6 +579,7 @@ db.products.insertMany([
 ### Node.js Application with MySQL Database
 
 #### Project Structure
+
 ```
 nodejs-mysql-app/
 ├── docker-compose.yml
@@ -544,6 +595,7 @@ nodejs-mysql-app/
 ```
 
 #### Backend Dockerfile
+
 ```dockerfile
 FROM node:18-alpine AS dependencies
 WORKDIR /app
@@ -567,6 +619,7 @@ CMD ["node", "dist/server.js"]
 ```
 
 #### Frontend Dockerfile
+
 ```dockerfile
 # Build Stage
 FROM node:18-alpine AS builder
@@ -585,8 +638,9 @@ CMD ["nginx", "-g", "daemon off;"]
 ```
 
 #### Docker Compose Configuration
+
 ```yaml
-version: '3.8'
+version: "3.8"
 services:
   frontend:
     build:
@@ -643,6 +697,7 @@ networks:
 ```
 
 #### Database Initialization
+
 ```sql
 -- init.sql
 CREATE TABLE IF NOT EXISTS users (
@@ -670,6 +725,7 @@ INSERT INTO products (name, price, description) VALUES
 ### FastAPI Application with PostgreSQL
 
 #### Project Structure
+
 ```
 python-postgres-app/
 ├── docker-compose.yml
@@ -685,6 +741,7 @@ python-postgres-app/
 ```
 
 #### FastAPI Application Dockerfile
+
 ```dockerfile
 # Build Stage
 FROM python:3.11-slim AS builder
@@ -712,6 +769,7 @@ CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
 ```
 
 #### Django Alternative Dockerfile
+
 ```dockerfile
 FROM python:3.11-slim
 
@@ -737,8 +795,9 @@ CMD ["gunicorn", "--bind", "0.0.0.0:8000", "myproject.wsgi:application"]
 ```
 
 #### Docker Compose Configuration
+
 ```yaml
-version: '3.8'
+version: "3.8"
 services:
   web:
     build: .
@@ -793,6 +852,7 @@ networks:
 ```
 
 #### Application Code Example (FastAPI)
+
 ```python
 # app/main.py
 from fastapi import FastAPI, Depends, HTTPException
@@ -820,18 +880,21 @@ def create_product(product: dict, db: Session = Depends(database.get_db)):
 ### Best Practices Summary
 
 1. **Security**
+
    - Use non-root users in containers
    - Implement health checks
    - Keep base images updated
    - Use secrets management
 
 2. **Performance**
+
    - Leverage multi-stage builds
    - Optimize layer caching
    - Use .dockerignore files
    - Choose appropriate base images
 
 3. **Maintainability**
+
    - Use Docker Compose for multi-container apps
    - Implement proper logging
    - Document configurations
