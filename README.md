@@ -71,81 +71,6 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 ```
-## 1. Private Docker Registry
-
-### Setting up a Private Docker Registry with Nexus
-
-Private Docker registries provide secure, controlled environments for storing and managing container images, especially critical for commercial applications.
-
-#### Benefits of Private Registries
-
-- **Faster Build Times**: Caching features reduce download times for frequently used images
-- **Security**: Keep proprietary applications and sensitive data within your organization
-- **Cost Control**: Avoid Docker Hub rate limits and subscription costs
-- **Enhanced Management**: Better control over image versions and access permissions
-
-#### Nexus Repository Setup
-
-**Prerequisites:**
-
-- Docker and Docker Compose installed
-- Ports 8084 (management) and 19001 (Docker registry) available
-
-**Docker Compose Configuration:**
-
-```yaml
-version: "3"
-services:
-  nexus_oss:
-    image: sonatype/nexus3:3.45.0
-    container_name: nexus3
-    ports:
-      - 8084:8081
-      - 19001:9001
-    restart: always
-    volumes:
-      - nexus_data:/nexus-data
-volumes:
-  nexus_data:
-```
-
-**Setup Steps:**
-
-1. Start Nexus: `docker-compose up -d`
-2. Access web interface at `http://localhost:8084`
-3. Retrieve initial admin password from `/nexus-data/admin.password`
-4. Complete setup wizard (enable anonymous access recommended)
-5. Create Docker repository (gear icon → repositories → create repository)
-
-#### Using Docker Hub as Proxy
-
-Configure Nexus as a Docker Hub proxy to cache images locally:
-
-- Repository type: Docker Proxy
-- Remote URL: `https://registry-1.docker.io`
-- Port: 8082
-- Enable anonymous pull
-
-### Pushing and Pulling Images
-
-**Login to Registry:**
-
-```bash
-docker login localhost:19001
-```
-
-**Tag and Push Images:**
-
-```bash
-docker tag myapp:latest localhost:19001/myapp:latest
-docker push localhost:19001/myapp:latest
-```
-
-**Pull from Registry:**
-
-```bash
-docker pull localhost:19001/myapp:latest
-```
 
 ## 2. Multi-Stage Dockerfiles
 
@@ -478,6 +403,81 @@ services:
 volumes:
   postgres_data:
     driver: local
+```
+## 1. Private Docker Registry
+
+### Setting up a Private Docker Registry with Nexus
+
+Private Docker registries provide secure, controlled environments for storing and managing container images, especially critical for commercial applications.
+
+#### Benefits of Private Registries
+
+- **Faster Build Times**: Caching features reduce download times for frequently used images
+- **Security**: Keep proprietary applications and sensitive data within your organization
+- **Cost Control**: Avoid Docker Hub rate limits and subscription costs
+- **Enhanced Management**: Better control over image versions and access permissions
+
+#### Nexus Repository Setup
+
+**Prerequisites:**
+
+- Docker and Docker Compose installed
+- Ports 8084 (management) and 19001 (Docker registry) available
+
+**Docker Compose Configuration:**
+
+```yaml
+version: "3"
+services:
+  nexus_oss:
+    image: sonatype/nexus3:3.45.0
+    container_name: nexus3
+    ports:
+      - 8084:8081
+      - 19001:9001
+    restart: always
+    volumes:
+      - nexus_data:/nexus-data
+volumes:
+  nexus_data:
+```
+
+**Setup Steps:**
+
+1. Start Nexus: `docker-compose up -d`
+2. Access web interface at `http://localhost:8084`
+3. Retrieve initial admin password from `/nexus-data/admin.password`
+4. Complete setup wizard (enable anonymous access recommended)
+5. Create Docker repository (gear icon → repositories → create repository)
+
+#### Using Docker Hub as Proxy
+
+Configure Nexus as a Docker Hub proxy to cache images locally:
+
+- Repository type: Docker Proxy
+- Remote URL: `https://registry-1.docker.io`
+- Port: 8082
+- Enable anonymous pull
+
+### Pushing and Pulling Images
+
+**Login to Registry:**
+
+```bash
+docker login localhost:19001
+```
+
+**Tag and Push Images:**
+
+```bash
+docker tag myapp:latest localhost:19001/myapp:latest
+docker push localhost:19001/myapp:latest
+```
+
+**Pull from Registry:**
+
+```bash
+docker pull localhost:19001/myapp:latest
 ```
 
 
